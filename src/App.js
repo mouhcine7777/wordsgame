@@ -9,8 +9,8 @@ import XImage from "./X.png";
 import TrueImage from "./true.png";
 import Num from "./num.png";
 
-const GRID_SIZE = 8;
-const wordsToFind = ["AGADIR", "SUD", "OUFELLA"];
+const GRID_SIZE = 10;
+const wordsToFind = ["AGADIR", "SUD", "OUFELLA", "TRIK", "ATTAHADI"];
 
 const AppWrapper = styled.div`
   background-image: url(${Background});
@@ -177,9 +177,50 @@ const App = () => {
     checkGameStatus();
   }, [foundWords]);
 
+  const isAdjacent = (pos1, pos2) => {
+    const rowDiff = Math.abs(pos1.row - pos2.row);
+    const colDiff = Math.abs(pos1.col - pos2.col);
+    return (rowDiff <= 1 && colDiff <= 1) && !(rowDiff === 0 && colDiff === 0);
+  };
+
   const handleSquareClick = (row, col) => {
-    const selected = [...selectedLetters, { row, col }];
-    setSelectedLetters(selected);
+    if (selectedLetters.length === 0) {
+      // First letter selection
+      setSelectedLetters([{ row, col }]);
+    } else {
+      // Check if the new letter is adjacent to the last selected letter
+      const lastSelected = selectedLetters[selectedLetters.length - 1];
+      if (isAdjacent(lastSelected, { row, col })) {
+        // Check if the selection follows a consistent direction
+        if (selectedLetters.length === 1 || isConsistentDirection(selectedLetters, { row, col })) {
+          setSelectedLetters([...selectedLetters, { row, col }]);
+        }
+      }
+    }
+  };
+
+  const isConsistentDirection = (selectedLetters, newPosition) => {
+    if (selectedLetters.length < 2) return true;
+
+    const first = selectedLetters[0];
+    const second = selectedLetters[1];
+    const last = selectedLetters[selectedLetters.length - 1];
+
+    // Calculate the direction vector from the first two letters
+    const baseDirectionRow = second.row - first.row;
+    const baseDirectionCol = second.col - first.col;
+
+    // Calculate the direction vector from the last letter to the new position
+    const newDirectionRow = newPosition.row - last.row;
+    const newDirectionCol = newPosition.col - last.col;
+
+    // Check if the new direction matches the base direction
+    return (
+      (Math.abs(baseDirectionRow) === Math.abs(newDirectionRow) &&
+        Math.abs(baseDirectionCol) === Math.abs(newDirectionCol)) &&
+      (baseDirectionRow * newDirectionRow >= 0 &&
+        baseDirectionCol * newDirectionCol >= 0)
+    );
   };
 
   const validateWord = () => {
